@@ -1,0 +1,250 @@
+loadstring([[
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "SpecialMenuGUI"
+gui.ResetOnSpawn = false
+
+local lang = nil
+local texts = {
+    tr = {
+        title = "🌟 Özel Menü 🌟",
+        enterCode = "Kodu Girin:",
+        approve = "Onayla",
+        getCode = "Kodu Al",
+        codeCopied = "Kopyalandı!",
+        codeText = "Kodu Al",
+        approved = "Onaylandı",
+        espOn = "ESP Aç",
+        espOff = "ESP Kapat",
+        code = "special"
+    },
+    en = {
+        title = "🌟 Special Menu 🌟",
+        enterCode = "Enter Code:",
+        approve = "Confirm",
+        getCode = "Get Code",
+        codeCopied = "Copied!",
+        codeText = "Get Code",
+        approved = "Confirmed",
+        espOn = "Enable ESP",
+        espOff = "Disable ESP",
+        code = "special"
+    }
+}
+
+local langFrame = Instance.new("Frame", gui)
+langFrame.Size = UDim2.new(0, 220, 0, 150)
+langFrame.Position = UDim2.new(0.5, -110, 0.5, -75)
+langFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+langFrame.BackgroundTransparency = 0.2
+langFrame.BorderSizePixel = 0
+
+local langTitle = Instance.new("TextLabel", langFrame)
+langTitle.Size = UDim2.new(1, 0, 0.4, 0)
+langTitle.Position = UDim2.new(0, 0, 0, 0)
+langTitle.BackgroundTransparency = 1
+langTitle.Text = "Select Language / Dil Seç"
+langTitle.TextColor3 = Color3.new(1, 1, 1)
+langTitle.Font = Enum.Font.SourceSansBold
+langTitle.TextSize = 22
+
+local function createLangButton(text, langCode, posY)
+    local btn = Instance.new("TextButton", langFrame)
+    btn.Size = UDim2.new(1, -20, 0, 40)
+    btn.Position = UDim2.new(0, 10, 0, posY)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 20
+    btn.Text = text
+    btn.MouseButton1Click:Connect(function()
+        lang = langCode
+        langFrame:Destroy()
+        loadFullMenu()
+    end)
+end
+
+createLangButton("Türkçe", "tr", 60)
+createLangButton("English", "en", 110)
+
+function loadFullMenu()
+    local t = texts[lang]
+
+    local frame = Instance.new("Frame", gui)
+    frame.Size = UDim2.new(0, 280, 0, 300)
+    frame.Position = UDim2.new(0.5, -140, 0.5, -150)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    frame.BackgroundTransparency = 0.4
+    frame.BorderSizePixel = 0
+    frame.Active = true
+    frame.Draggable = true
+    frame.Visible = true
+
+    local closeButton = Instance.new("TextButton", frame)
+    closeButton.Size = UDim2.new(0, 30, 0, 30)
+    closeButton.Position = UDim2.new(1, -35, 0, 5)
+    closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    closeButton.TextColor3 = Color3.new(1, 1, 1)
+    closeButton.Font = Enum.Font.SourceSansBold
+    closeButton.TextSize = 22
+    closeButton.Text = "X"
+    closeButton.MouseButton1Click:Connect(function()
+        frame.Visible = false
+        menuVisible = false
+    end)
+
+    local title = Instance.new("TextLabel", frame)
+    title.Size = UDim2.new(1, 0, 0, 35)
+    title.Text = t.title
+    title.TextColor3 = Color3.new(1, 1, 0)
+    title.Font = Enum.Font.SourceSansBold
+    title.TextSize = 26
+    title.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", frame)
+    label.Size = UDim2.new(1, -20, 0, 20)
+    label.Position = UDim2.new(0, 10, 0, 45)
+    label.Text = t.enterCode
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 18
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+
+    local box = Instance.new("TextBox", frame)
+    box.Size = UDim2.new(1, -20, 0, 30)
+    box.Position = UDim2.new(0, 10, 0, 70)
+    box.PlaceholderText = t.code
+    box.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    box.TextColor3 = Color3.new(1, 1, 1)
+    box.Font = Enum.Font.SourceSans
+    box.TextSize = 20
+
+    local approve = Instance.new("TextButton", frame)
+    approve.Size = UDim2.new(0.45, -10, 0, 35)
+    approve.Position = UDim2.new(0, 10, 0, 110)
+    approve.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+    approve.TextColor3 = Color3.new(1, 1, 1)
+    approve.Font = Enum.Font.SourceSansBold
+    approve.TextSize = 20
+    approve.Text = t.approve
+
+    local copy = Instance.new("TextButton", frame)
+    copy.Size = UDim2.new(0.45, -10, 0, 35)
+    copy.Position = UDim2.new(0.55, 0, 0, 110)
+    copy.BackgroundColor3 = Color3.fromRGB(34, 139, 34)
+    copy.TextColor3 = Color3.new(1, 1, 1)
+    copy.Font = Enum.Font.SourceSansBold
+    copy.TextSize = 20
+    copy.Text = t.getCode
+
+    local features = Instance.new("Frame", frame)
+    features.Size = UDim2.new(1, 0, 0, 200)
+    features.Position = UDim2.new(0, 0, 0, 155)
+    features.BackgroundTransparency = 0.5
+    features.Visible = false
+
+    local function createBtn(text, posY)
+        local btn = Instance.new("TextButton", features)
+        btn.Size = UDim2.new(1, 0, 0, 40)
+        btn.Position = UDim2.new(0, 0, 0, posY)
+        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextSize = 18
+        btn.Text = text
+        return btn
+    end
+
+    local esp = false
+    local espBtn = createBtn(t.espOn, 0)
+    local markers = {}
+
+    local function toggleESP(on)
+        esp = on
+        for _, b in pairs(markers) do b:Destroy() end
+        if not on then return end
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= player and p.Character and p.Character:FindFirstChild("Head") then
+                local gui = Instance.new("BillboardGui")
+                gui.Adornee = p.Character.Head
+                gui.Size = UDim2.new(0, 120, 0, 40)
+                gui.AlwaysOnTop = true
+                local label = Instance.new("TextLabel", gui)
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 0.5
+                label.BackgroundColor3 = Color3.new(0, 0, 0)
+                label.Text = p.Name
+                label.TextColor3 = Color3.new(1, 1, 0)
+                label.Font = Enum.Font.SourceSansBold
+                label.TextScaled = true
+                gui.Parent = player.PlayerGui
+                markers[p] = gui
+            end
+        end
+    end
+
+    espBtn.MouseButton1Click:Connect(function()
+        toggleESP(not esp)
+        espBtn.Text = esp and t.espOff or t.espOn
+    end)
+
+    local yeet = createBtn("YEET!", 45)
+    yeet.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    yeet.MouseButton1Click:Connect(function()
+        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.Velocity = Vector3.new(0, 150, 0)
+        end
+    end)
+
+    -- 🌟 Yeni Özellik: Tıklayarak Işınlama 🌟
+    local teleporting = false
+    local teleportBtn = createBtn("Işınlama", 90)
+    teleportBtn.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    teleportBtn.MouseButton1Click:Connect(function()
+        teleporting = not teleporting
+        teleportBtn.Text = teleporting and "Işınlama: Açık" or "Işınlama"
+    end)
+    player:GetMouse().Button1Down:Connect(function()
+        if teleporting and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(player:GetMouse().Hit.p + Vector3.new(0, 5, 0))
+        end
+    end)
+
+    approve.MouseButton1Click:Connect(function()
+        if box.Text:lower() == t.code then
+            features.Visible = true
+            approve.Text = t.approved
+            approve.BackgroundColor3 = Color3.fromRGB(34, 139, 34)
+        else
+            features.Visible = false
+            approve.Text = t.approve
+            approve.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+        end
+    end)
+
+    copy.MouseButton1Click:Connect(function()
+        pcall(function()
+            setclipboard("discord.gg/specialhub")
+            copy.Text = t.codeCopied
+            wait(2)
+            copy.Text = t.codeText
+        end)
+    end)
+
+    local menuVisible = true
+    UIS.InputBegan:Connect(function(input, gpe)
+        if gpe then return end
+        if input.KeyCode == Enum.KeyCode.P then
+            menuVisible = not menuVisible
+            frame.Visible = menuVisible
+        end
+    end)
+end
+]])()
