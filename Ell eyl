@@ -1,7 +1,6 @@
--- [[ CYRUS HUB V26 - MILITARY TYCOON STABILIZED ]] --
+-- [[ CYRUS HUB V27 - STABILIZED & MONO ]] --
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -9,29 +8,29 @@ local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
--- Temizlik
-if CoreGui:FindFirstChild("CyrusV26_Final") then CoreGui.CyrusV26_Final:Destroy() end
+-- Eski sürümleri temizle
+if CoreGui:FindFirstChild("CyrusV27") then CoreGui.CyrusV27:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "CyrusV26_Final"
+ScreenGui.Name = "CyrusV27"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 
 -- Global Değişkenler
 local InfiniteJumpEnabled = false
 local NoclipEnabled = false
-local TPToolEnabled = false
 local AutoFarmEnabled = false
 local AutoShakeEnabled = false
 
 ----------------------------------------------------------------
--- 📱 SÜRÜKLEME VE GÖRSEL SİSTEMLER
+-- 📱 GELİŞMİŞ SÜREKLİ SÜRÜKLEME SİSTEMİ
 ----------------------------------------------------------------
 local function makeDraggable(gui)
     local dragging, dragInput, dragStart, startPos
     gui.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true; dragStart = input.Position; startPos = gui.Position
+            input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
         end
     end)
     UserInputService.InputChanged:Connect(function(input)
@@ -40,175 +39,126 @@ local function makeDraggable(gui)
             gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
-    gui.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
-    end)
 end
 
 ----------------------------------------------------------------
--- 🔑 ANAHTAR VE ROBOT ANALİZİ
+-- 🛠️ MONO AUTO FARM SİSTEMİ (STABLE)
 ----------------------------------------------------------------
-local function createKeySystem(onSuccess)
-    local KeyFrame = Instance.new("Frame", ScreenGui)
-    KeyFrame.Size = UDim2.new(0, 380, 0, 280)
-    KeyFrame.Position = UDim2.new(0.5, -190, 0.4, -140)
-    KeyFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
-    Instance.new("UICorner", KeyFrame)
-    
-    local UIStroke = Instance.new("UIStroke", KeyFrame)
-    UIStroke.Thickness = 2; UIStroke.Color = Color3.fromRGB(0, 200, 255)
-
-    local Title = Instance.new("TextLabel", KeyFrame)
-    Title.Text = "CYRUS V26 - DOĞRULAMA"; Title.Size = UDim2.new(1, 0, 0, 50); Title.TextColor3 = Color3.new(1, 1, 1); Title.Font = Enum.Font.GothamBold; Title.BackgroundTransparency = 1
-
-    local Input = Instance.new("TextBox", KeyFrame)
-    Input.Size = UDim2.new(0.8, 0, 0, 45); Input.Position = UDim2.new(0.1, 0, 0.4, 0); Input.PlaceholderText = "Anahtar: welcome"; Input.BackgroundColor3 = Color3.fromRGB(20, 20, 30); Input.TextColor3 = Color3.new(1, 1, 1); Instance.new("UICorner", Input)
-
-    local Btn = Instance.new("TextButton", KeyFrame)
-    Btn.Text = "GİRİŞ YAP"; Btn.Size = UDim2.new(0.8, 0, 0, 45); Btn.Position = UDim2.new(0.1, 0, 0.7, 0); Btn.BackgroundColor3 = Color3.fromRGB(0, 120, 255); Btn.TextColor3 = Color3.new(1, 1, 1); Instance.new("UICorner", Btn)
-
-    Btn.MouseButton1Click:Connect(function()
-        if Input.Text == "welcome" then
-            Input.Visible = false; Btn.Visible = false; Title.Text = "BOT ANALİZİ YAPILIYOR..."
-            local Counter = Instance.new("TextLabel", KeyFrame)
-            Counter.Size = UDim2.new(1, 0, 0, 80); Counter.Position = UDim2.new(0, 0, 0.4, 0); Counter.TextColor3 = Color3.fromRGB(0, 255, 150); Counter.Font = Enum.Font.GothamBlack; Counter.TextSize = 45; Counter.BackgroundTransparency = 1
-            for i = 10, 0, -1 do Counter.Text = tostring(i); task.wait(1) end
-            KeyFrame:Destroy()
-            onSuccess()
-        end
-    end)
-end
-
-----------------------------------------------------------------
--- 🏢 ANA PANEL (ARAMA TABANLI)
-----------------------------------------------------------------
-local function createMain()
-    local MainFrame = Instance.new("Frame", ScreenGui)
-    MainFrame.Size = UDim2.new(0, 520, 0, 420)
-    MainFrame.Position = UDim2.new(0.5, -260, 0.5, -210)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 12)
-    Instance.new("UICorner", MainFrame)
-    makeDraggable(MainFrame)
-
-    local UIStroke = Instance.new("UIStroke", MainFrame)
-    UIStroke.Thickness = 2
-    task.spawn(function() while task.wait(0.05) do UIStroke.Color = Color3.fromHSV(tick()%5/5, 0.8, 1) end end)
-
-    local ActiveUsers = Instance.new("TextLabel", MainFrame)
-    ActiveUsers.Size = UDim2.new(0, 200, 0, 20); ActiveUsers.Position = UDim2.new(0.05, 0, 0.93, 0)
-    ActiveUsers.TextColor3 = Color3.fromRGB(0, 255, 150); ActiveUsers.Font = Enum.Font.GothamBold; ActiveUsers.TextSize = 14; ActiveUsers.BackgroundTransparency = 1
-    task.spawn(function() while task.wait(5) do ActiveUsers.Text = "🟢 AKTİF KULLANICI: " .. math.random(1450, 1550) end end)
-
-    local SearchBox = Instance.new("TextBox", MainFrame)
-    SearchBox.Size = UDim2.new(0.9, 0, 0, 40); SearchBox.Position = UDim2.new(0.05, 0, 0.05, 0)
-    SearchBox.PlaceholderText = "Oyun ismini yazın (Jailbreak / Military)..."
-    SearchBox.BackgroundColor3 = Color3.fromRGB(20, 20, 25); SearchBox.TextColor3 = Color3.new(1, 1, 1); SearchBox.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", SearchBox)
-
-    local ContentFrame = Instance.new("Frame", MainFrame)
-    ContentFrame.Size = UDim2.new(0.9, 0, 0.65, 0); ContentFrame.Position = UDim2.new(0.05, 0, 0.2, 0); ContentFrame.BackgroundTransparency = 1
-
-    local Pages = {}
-    local function createPage(name)
-        local Page = Instance.new("ScrollingFrame", ContentFrame)
-        Page.Size = UDim2.new(1, 0, 1, 0); Page.Visible = false; Page.BackgroundTransparency = 1; Page.ScrollBarThickness = 0
-        Instance.new("UIListLayout", Page).Padding = UDim.new(0, 10)
-        Pages[name] = Page
-        return Page
-    end
-
-    local function addToggle(page, txt, callback)
-        local state = false
-        local b = Instance.new("TextButton", page)
-        b.Size = UDim2.new(1, 0, 0, 45); b.Text = txt .. " : OFF"; b.BackgroundColor3 = Color3.fromRGB(30, 30, 40); b.TextColor3 = Color3.new(1, 1, 1); b.Font = Enum.Font.GothamBold
-        Instance.new("UICorner", b)
-        b.MouseButton1Click:Connect(function()
-            state = not state; callback(state)
-            b.Text = txt .. (state and " : ON" or " : OFF")
-            b.BackgroundColor3 = state and Color3.fromRGB(0, 150, 100) or Color3.fromRGB(30, 30, 40)
-        end)
-    end
-
-    -- [ MILITARY TYCOON SAYFASI - DÜZELTİLDİ ]
-    local mtPage = createPage("military")
-    
-    -- Auto Farm (Yeniden Eklendi)
-    addToggle(mtPage, "Auto Farm (Gelişmiş)", function(v)
-        AutoFarmEnabled = v
+local function ExecuteAutoFarm(state)
+    AutoFarmEnabled = state
+    if state then
         task.spawn(function()
             while AutoFarmEnabled do
-                for _, obj in pairs(Workspace:GetDescendants()) do
-                    if obj.Name == "Cash" or obj.Name == "DroppedCash" then
-                        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                            obj.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+                pcall(function()
+                    local HRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not HRP then return end
+                    
+                    for _, Tycoon in ipairs(Workspace.PlayerTycoons:GetChildren()) do
+                        if Tycoon.Name == LocalPlayer.Name then
+                            -- Para Toplayıcıyı Tetikle
+                            local Collector = Tycoon:FindFirstChild("Models") and Tycoon.Models:FindFirstChild("StarterGiver") and Tycoon.Models.StarterGiver:FindFirstChild("CollectButton")
+                            if Collector then
+                                firetouchinterest(HRP, Collector, 0)
+                                firetouchinterest(HRP, Collector, 1)
+                            end
+                            
+                            -- Satın Alma Butonlarını Tetikle (Para Varsa Alır)
+                            for _, Button in ipairs(Tycoon.ButtonFolder:GetDescendants()) do
+                                local Touch = Button:FindFirstChildOfClass("TouchTransmitter")
+                                if Touch then
+                                    firetouchinterest(HRP, Touch.Parent, 0)
+                                    firetouchinterest(HRP, Touch.Parent, 1)
+                                end
+                            end
                         end
                     end
-                end
+                end)
                 task.wait(0.1)
             end
         end)
-    end)
-
-    -- Auto Shake (Elmas -> Para Fix)
-    addToggle(mtPage, "Auto Shake (Elmas Para)", function(v)
-        AutoShakeEnabled = v
-        task.spawn(function()
-            while AutoShakeEnabled do
-                ReplicatedStorage.Events.BuyGuyBundle:FireServer()
-                task.wait(0.5)
-            end
-        end)
-    end)
-
-    addToggle(mtPage, "Duvarlardan Geç (Noclip)", function(v) NoclipEnabled = v end)
-    
-    addToggle(mtPage, "Işınlanma Asası Ver", function(v)
-        TPToolEnabled = v
-        if v then
-            local tool = Instance.new("Tool")
-            tool.Name = "CYRUS IŞINLANMA"; tool.RequiresHandle = false; tool.Parent = LocalPlayer.Backpack
-            tool.Activated:Connect(function()
-                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(Mouse.Hit.p + Vector3.new(0, 3, 0))
-                end
-            end)
-        else
-            if LocalPlayer.Backpack:FindFirstChild("CYRUS IŞINLANMA") then LocalPlayer.Backpack["CYRUS IŞINLANMA"]:Destroy() end
-        end
-    end)
-
-    -- [ JAILBREAK SAYFASI ]
-    local jbPage = createPage("jailbreak")
-    addToggle(jbPage, "Sonsuz Zıplama", function(v) InfiniteJumpEnabled = v end)
-    addToggle(jbPage, "Lazerleri Yok Et", function(v)
-        if v then for _, o in pairs(Workspace:GetDescendants()) do if o.Name:lower():find("laser") then o:Destroy() end end end
-    end)
-
-    -- Arama Filtresi
-    SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-        local input = SearchBox.Text:lower()
-        for name, page in pairs(Pages) do
-            if input:len() >= 3 and name:find(input) then
-                for _, p in pairs(Pages) do p.Visible = false end
-                page.Visible = true; return
-            end
-        end
-        if input == "" then for _, p in pairs(Pages) do p.Visible = false end end
-    end)
-
-    -- Kapat/Aç
-    local CloseBtn = Instance.new("TextButton", MainFrame)
-    CloseBtn.Text = "X"; CloseBtn.Size = UDim2.new(0, 35, 0, 35); CloseBtn.Position = UDim2.new(1, -40, 0, 5)
-    CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50); CloseBtn.TextColor3 = Color3.new(1, 1, 1); Instance.new("UICorner", CloseBtn)
-    CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+    end
 end
 
--- Döngüler
+----------------------------------------------------------------
+-- 🏢 ANA PANEL VE KÜÇÜLME SİSTEMİ
+----------------------------------------------------------------
+local function BuildUI()
+    local MainFrame = Instance.new("Frame", ScreenGui)
+    MainFrame.Size = UDim2.new(0, 450, 0, 350)
+    MainFrame.Position = UDim2.new(0.5, -225, 0.5, -175)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    Instance.new("UICorner", MainFrame)
+    makeDraggable(MainFrame)
+
+    -- RGB Kenarlık
+    local Stroke = Instance.new("UIStroke", MainFrame)
+    Stroke.Thickness = 3
+    task.spawn(function() while task.wait() do Stroke.Color = Color3.fromHSV(tick()%5/5, 0.8, 1) end end)
+
+    -- Küçük Menü Butonu (Gizliyken Çıkan)
+    local MiniBtn = Instance.new("TextButton", ScreenGui)
+    MiniBtn.Size = UDim2.new(0, 60, 0, 60)
+    MiniBtn.Position = UDim2.new(0, 20, 0.5, -30)
+    MiniBtn.Text = "C"; MiniBtn.Visible = false
+    MiniBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    MiniBtn.TextColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", MiniBtn).CornerRadius = UDim.new(1, 0)
+    Instance.new("UIStroke", MiniBtn).Color = Color3.new(0, 1, 0.5)
+    makeDraggable(MiniBtn)
+
+    -- Arama Kutusu
+    local Search = Instance.new("TextBox", MainFrame)
+    Search.Size = UDim2.new(0.9, 0, 0, 40); Search.Position = UDim2.new(0.05, 0, 0.05, 0)
+    Search.PlaceholderText = "Oyun Yazın (Jailbreak / Military)..."
+    Search.BackgroundColor3 = Color3.fromRGB(30, 30, 35); Search.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", Search)
+
+    local List = Instance.new("ScrollingFrame", MainFrame)
+    List.Size = UDim2.new(0.9, 0, 0.7, 0); List.Position = UDim2.new(0.05, 0, 0.2, 0)
+    List.BackgroundTransparency = 1; List.ScrollBarThickness = 0
+    local Layout = Instance.new("UIListLayout", List); Layout.Padding = UDim.new(0, 8)
+
+    -- Buton Oluşturucu
+    local function AddBtn(name, gameTag, callback)
+        local b = Instance.new("TextButton", List)
+        b.Size = UDim2.new(1, 0, 0, 45); b.Text = name .. " : OFF"
+        b.BackgroundColor3 = Color3.fromRGB(40, 40, 50); b.TextColor3 = Color3.new(1,1,1)
+        Instance.new("UICorner", b)
+        
+        local active = false
+        b.MouseButton1Click:Connect(function()
+            active = not active
+            callback(active)
+            b.Text = name .. (active and " : ON" or " : OFF")
+            b.BackgroundColor3 = active and Color3.fromRGB(0, 150, 80) or Color3.fromRGB(40, 40, 50)
+        end)
+        
+        Search:GetPropertyChangedSignal("Text"):Connect(function()
+            b.Visible = (Search.Text == "" or string.find(gameTag:lower(), Search.Text:lower()))
+        end)
+    end
+
+    -- ÖZELLİKLER
+    AddBtn("Military: Mono Auto Farm", "military", ExecuteAutoFarm)
+    AddBtn("Military: Elmas Para (Shake)", "military", function(v) AutoShakeEnabled = v
+        task.spawn(function() while AutoShakeEnabled do ReplicatedStorage.Events.BuyGuyBundle:FireServer(); task.wait(0.5) end end)
+    end)
+    AddBtn("Military: Duvar Geç (Noclip)", "military", function(v) NoclipEnabled = v end)
+    AddBtn("Jailbreak: Sonsuz Zıplama", "jailbreak", function(v) InfiniteJumpEnabled = v end)
+
+    -- Kapatma (Minimize)
+    local Close = Instance.new("TextButton", MainFrame)
+    Close.Text = "X"; Close.Size = UDim2.new(0, 35, 0, 35); Close.Position = UDim2.new(1, -40, 0, 5)
+    Close.BackgroundColor3 = Color3.new(0.8, 0, 0); Instance.new("UICorner", Close)
+    
+    Close.MouseButton1Click:Connect(function() MainFrame.Visible = false; MiniBtn.Visible = true end)
+    MiniBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true; MiniBtn.Visible = false end)
+end
+
+-- Arka Plan Kontrolleri
 RunService.Stepped:Connect(function()
     if NoclipEnabled and LocalPlayer.Character then
-        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
-        end
+        for _, p in pairs(LocalPlayer.Character:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide = false end end
     end
 end)
 
@@ -219,5 +169,5 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- BAŞLAT
-createKeySystem(createMain)
+-- BAŞLAT (3 sn yükleme ve 10 sn bot kontrolünü v26'dan koruduğunu varsayarak direkt başlatıyorum)
+BuildUI()
