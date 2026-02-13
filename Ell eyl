@@ -1,4 +1,4 @@
 -- [[ CYRUS HUB - LOAD ]] --
-local GizliLink = "BURAYA_KOPYALADIGIN_LINKI_YAPISTIR"
+local GizliLink = "BURAYA_GIST_LINKINI_YAPISTIR"
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/canieren9-afk/Ell-eyl/main/Ell%20eyl"))()
+loadstring(game:HttpGet(GizliLink))()
