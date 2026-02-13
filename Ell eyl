@@ -1,349 +1,244 @@
-loadstring([[
+-- [[ CYRUS HUB V18 - FINAL VERSION ]] --
 local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local humanoid = char:WaitForChild("Humanoid")
+local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "SpecialMenuGUI"
-gui.ResetOnSpawn = false
+-- Önceki sürümleri temizle
+if CoreGui:FindFirstChild("CyrusV18") then CoreGui.CyrusV18:Destroy() end
 
-local lang = nil
-local texts = {
-    tr = {
-        title = "🌟 Özel Menü 🌟",
-        enterCode = "Kodu Girin:",
-        approve = "Onayla",
-        getCode = "Kodu Al",
-        codeCopied = "Kopyalandı!",
-        codeText = "Kodu Al",
-        approved = "Onaylandı",
-        espOn = "ESP Aç",
-        espOff = "ESP Kapat",
-        teleport = "Sihirli Elma",
-        speed = "Hızınızı Girin:",
-        setSpeed = "Hızı Ayarla",
-        infiniteJumpOn = "Sonsuz Zıplama: Açık",
-        infiniteJumpOff = "Sonsuz Zıplama: Kapalı",
-        noclipOn = "Duvardan Geçme: Açık",
-        noclipOff = "Duvardan Geçme: Kapalı",
-        hideMenu = "👁 Gizle",
-        showMenu = "📜 Menü",
-        closeMenu = "❌",
-        code = "special"
-    },
-    en = {
-        title = "🌟 Special Menu 🌟",
-        enterCode = "Enter Code:",
-        approve = "Confirm",
-        getCode = "Get Code",
-        codeCopied = "Copied!",
-        codeText = "Get Code",
-        approved = "Confirmed",
-        espOn = "Enable ESP",
-        espOff = "Disable ESP",
-        teleport = "Magic Apple",
-        speed = "Enter Your Speed:",
-        setSpeed = "Set Speed",
-        infiniteJumpOn = "Infinite Jump: On",
-        infiniteJumpOff = "Infinite Jump: Off",
-        noclipOn = "Noclip: On",
-        noclipOff = "Noclip: Off",
-        hideMenu = "👁 Hide",
-        showMenu = "📜 Menu",
-        closeMenu = "❌",
-        code = "special"
-    }
-}
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CyrusV18"
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
 
-local langFrame = Instance.new("Frame", gui)
-langFrame.Size = UDim2.new(0, 220, 0, 150)
-langFrame.Position = UDim2.new(0.5, -110, 0.5, -75)
-langFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-langFrame.BackgroundTransparency = 0.2
-langFrame.BorderSizePixel = 0
+-- Global Özellik Değişkenleri
+local InfiniteJumpEnabled = false
 
-local langTitle = Instance.new("TextLabel", langFrame)
-langTitle.Size = UDim2.new(1, 0, 0.4, 0)
-langTitle.Position = UDim2.new(0, 0, 0, 0)
-langTitle.BackgroundTransparency = 1
-langTitle.Text = "Select Language / Dil Seç"
-langTitle.TextColor3 = Color3.new(1, 1, 1)
-langTitle.Font = Enum.Font.SourceSansBold
-langTitle.TextSize = 22
-
-local function createLangButton(text, langCode, posY)
-    local btn = Instance.new("TextButton", langFrame)
-    btn.Size = UDim2.new(1, -20, 0, 40)
-    btn.Position = UDim2.new(0, 10, 0, posY)
-    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 20
-    btn.Text = text
-    btn.MouseButton1Click:Connect(function()
-        lang = langCode
-        langFrame:Destroy()
-        loadFullMenu()
+----------------------------------------------------------------
+-- 📱 SÜRÜKLEME SİSTEMİ
+----------------------------------------------------------------
+local function makeDraggable(gui)
+    local dragging, dragInput, dragStart, startPos
+    gui.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true; dragStart = input.Position; startPos = gui.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    gui.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
     end)
 end
 
-createLangButton("Türkçe", "tr", 60)
-createLangButton("English", "en", 110)
+----------------------------------------------------------------
+-- 💎 MODERN GİRİŞ EKRANI
+----------------------------------------------------------------
+local function playIntro(onComplete)
+    local IntroBg = Instance.new("Frame", ScreenGui)
+    IntroBg.Size = UDim2.new(1, 0, 1, 0)
+    IntroBg.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+    IntroBg.BackgroundTransparency = 0.2
+    IntroBg.ZIndex = 500
 
-function loadFullMenu()
-    local t = texts[lang]
+    local MainIntroFrame = Instance.new("Frame", IntroBg)
+    MainIntroFrame.Size = UDim2.new(0, 300, 0, 200)
+    MainIntroFrame.Position = UDim2.new(0.5, -150, 0.45, -100)
+    MainIntroFrame.BackgroundTransparency = 1
 
-    local frame = Instance.new("Frame", gui)
-    frame.Size = UDim2.new(0, 320, 0, 450)
-    frame.Position = UDim2.new(0.5, -160, 0.5, -225)
-    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    frame.BackgroundTransparency = 0.4
-    frame.BorderSizePixel = 0
-    frame.Active = true
-    frame.Draggable = true
-    frame.Visible = true
+    local Status = Instance.new("TextLabel", MainIntroFrame)
+    Status.Size = UDim2.new(1, 0, 0, 50)
+    Status.Text = "BEKLENİYOR..."
+    Status.TextColor3 = Color3.new(1, 1, 1)
+    Status.Font = Enum.Font.GothamBold
+    Status.TextSize = 25
+    Status.BackgroundTransparency = 1
 
-    -- Menü başlığı
-    local title = Instance.new("TextLabel", frame)
-    title.Size = UDim2.new(1, -80, 0, 40)
-    title.Text = t.title
-    title.TextColor3 = Color3.new(1, 1, 0)
-    title.Font = Enum.Font.SourceSansBold
-    title.TextSize = 26
-    title.BackgroundTransparency = 1
-    title.Position = UDim2.new(0, 10, 0, 0)
+    local LoadingBarBg = Instance.new("Frame", MainIntroFrame)
+    LoadingBarBg.Size = UDim2.new(0.8, 0, 0, 4)
+    LoadingBarBg.Position = UDim2.new(0.1, 0, 0.4, 0)
+    LoadingBarBg.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    LoadingBarBg.BorderSizePixel = 0
+    
+    local LoadingBar = Instance.new("Frame", LoadingBarBg)
+    LoadingBar.Size = UDim2.new(0, 0, 1, 0)
+    LoadingBar.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+    LoadingBar.BorderSizePixel = 0
 
-    -- 👁 Gizle butonu
-    local hideBtn = Instance.new("TextButton", frame)
-    hideBtn.Size = UDim2.new(0, 70, 0, 30)
-    hideBtn.Position = UDim2.new(1, -150, 0, 5)
-    hideBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    hideBtn.TextColor3 = Color3.new(1, 1, 1)
-    hideBtn.Font = Enum.Font.SourceSansBold
-    hideBtn.TextSize = 16
-    hideBtn.Text = t.hideMenu
+    local CountLabel = Instance.new("TextLabel", MainIntroFrame)
+    CountLabel.Size = UDim2.new(1, 0, 0, 100)
+    CountLabel.Position = UDim2.new(0, 0, 0.6, 0)
+    CountLabel.Text = ""
+    CountLabel.TextColor3 = Color3.fromRGB(0, 200, 255)
+    CountLabel.Font = Enum.Font.GothamBlack
+    CountLabel.TextSize = 0
+    CountLabel.BackgroundTransparency = 1
 
-    -- ❌ Çarpı butonu (tam kapatma)
-    local closeBtn = Instance.new("TextButton", frame)
-    closeBtn.Size = UDim2.new(0, 30, 0, 30)
-    closeBtn.Position = UDim2.new(1, -40, 0, 5)
-    closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    closeBtn.TextColor3 = Color3.new(1, 1, 1)
-    closeBtn.Font = Enum.Font.SourceSansBold
-    closeBtn.TextSize = 18
-    closeBtn.Text = t.closeMenu
+    TweenService:Create(LoadingBar, TweenInfo.new(1.2), {Size = UDim2.new(1, 0, 1, 0)}):Play()
+    task.wait(1.2)
+    
+    Status.Text = "SİSTEM HAZIR"
+    task.wait(0.5)
+    Status:Destroy()
+    LoadingBarBg:Destroy()
 
-    -- Küçük 📜 Menü butonu (başta gizli)
-    local showMenuBtn = Instance.new("TextButton", gui)
-    showMenuBtn.Size = UDim2.new(0, 90, 0, 35)
-    showMenuBtn.Position = UDim2.new(0, 10, 0, 10)
-    showMenuBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 200)
-    showMenuBtn.TextColor3 = Color3.new(1, 1, 1)
-    showMenuBtn.Font = Enum.Font.SourceSansBold
-    showMenuBtn.TextSize = 16
-    showMenuBtn.Text = t.showMenu
-    showMenuBtn.Visible = false
-
-    -- Kaydırılabilir içerik
-    local scrollFrame = Instance.new("ScrollingFrame", frame)
-    scrollFrame.Size = UDim2.new(1, -10, 1, -50)
-    scrollFrame.Position = UDim2.new(0, 5, 0, 45)
-    scrollFrame.CanvasSize = UDim2.new(0, 0, 2, 0)
-    scrollFrame.ScrollBarThickness = 8
-    scrollFrame.BackgroundTransparency = 1
-
-    local label = Instance.new("TextLabel", scrollFrame)
-    label.Size = UDim2.new(1, -20, 0, 25)
-    label.Position = UDim2.new(0, 10, 0, 0)
-    label.Text = t.enterCode
-    label.TextColor3 = Color3.new(1, 1, 1)
-    label.Font = Enum.Font.SourceSansBold
-    label.TextSize = 20
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.BackgroundTransparency = 1
-
-    local box = Instance.new("TextBox", scrollFrame)
-    box.Size = UDim2.new(1, -20, 0, 35)
-    box.Position = UDim2.new(0, 10, 0, 30)
-    box.PlaceholderText = t.code
-    box.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    box.TextColor3 = Color3.new(1, 1, 1)
-    box.Font = Enum.Font.SourceSans
-    box.TextSize = 20
-
-    local approve = Instance.new("TextButton", scrollFrame)
-    approve.Size = UDim2.new(0.45, -5, 0, 40)
-    approve.Position = UDim2.new(0, 10, 0, 75)
-    approve.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
-    approve.TextColor3 = Color3.new(1, 1, 1)
-    approve.Font = Enum.Font.SourceSansBold
-    approve.TextSize = 20
-    approve.Text = t.approve
-
-    local copy = Instance.new("TextButton", scrollFrame)
-    copy.Size = UDim2.new(0.45, -5, 0, 40)
-    copy.Position = UDim2.new(0.55, 0, 0, 75)
-    copy.BackgroundColor3 = Color3.fromRGB(34, 139, 34)
-    copy.TextColor3 = Color3.new(1, 1, 1)
-    copy.Font = Enum.Font.SourceSansBold
-    copy.TextSize = 20
-    copy.Text = t.getCode
-
-    local features = Instance.new("Frame", scrollFrame)
-    features.Size = UDim2.new(1, -20, 0, 900)
-    features.Position = UDim2.new(0, 10, 0, 130)
-    features.BackgroundTransparency = 1
-    features.Visible = false
-
-    local function createBtn(text, posY)
-        local btn = Instance.new("TextButton", features)
-        btn.Size = UDim2.new(1, 0, 0, 40)
-        btn.Position = UDim2.new(0, 0, 0, posY)
-        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.Font = Enum.Font.SourceSansBold
-        btn.TextSize = 18
-        btn.Text = text
-        return btn
+    for i = 3, 1, -1 do
+        CountLabel.Text = tostring(i)
+        CountLabel.TextSize = 0
+        CountLabel.TextTransparency = 0
+        TweenService:Create(CountLabel, TweenInfo.new(0.6, Enum.EasingStyle.Back), {TextSize = 120}):Play()
+        task.wait(0.7)
+        TweenService:Create(CountLabel, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+        task.wait(0.3)
     end
 
-    -- Sonsuzluk Zıplama
-    local infiniteJump = false
-    local infiniteBtn = createBtn(t.infiniteJumpOff, 0)
-    infiniteBtn.MouseButton1Click:Connect(function()
-        infiniteJump = not infiniteJump
-        infiniteBtn.Text = infiniteJump and t.infiniteJumpOn or t.infiniteJumpOff
-    end)
-    UIS.JumpRequest:Connect(function()
-        if infiniteJump and humanoid then
+    TweenService:Create(IntroBg, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+    task.wait(0.5)
+    IntroBg:Destroy()
+    if onComplete then onComplete() end
+end
+
+----------------------------------------------------------------
+-- 🟢 SONSUZ ZIPLAMA MANTIĞI
+----------------------------------------------------------------
+UserInputService.JumpRequest:Connect(function()
+    if InfiniteJumpEnabled and LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
             humanoid:ChangeState("Jumping")
+        end
+    end
+end)
+
+----------------------------------------------------------------
+-- 🟣 ANA PANEL
+----------------------------------------------------------------
+local function createMain()
+    local MainFrame = Instance.new("Frame", ScreenGui)
+    MainFrame.Size = UDim2.new(0, 360, 0, 420)
+    MainFrame.Position = UDim2.new(0.5, -180, 0.5, -210)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+    MainFrame.BorderSizePixel = 0
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 15)
+    makeDraggable(MainFrame)
+
+    local UIStroke = Instance.new("UIStroke", MainFrame)
+    UIStroke.Thickness = 2
+    spawn(function()
+        local h = 0
+        while true do
+            h = (h + 0.005) % 1
+            UIStroke.Color = Color3.fromHSV(h, 0.7, 0.8)
+            task.wait(0.05)
         end
     end)
 
-    -- Duvardan Geçme (Noclip)
-    local noclip = false
-    local noclipBtn = createBtn(t.noclipOff, 50)
-    noclipBtn.MouseButton1Click:Connect(function()
-        noclip = not noclip
-        noclipBtn.Text = noclip and t.noclipOn or t.noclipOff
+    local Title = Instance.new("TextLabel", MainFrame)
+    Title.Text = "CYRUS X BYZEN V18"
+    Title.Size = UDim2.new(1, 0, 0, 55)
+    Title.TextColor3 = Color3.new(1, 1, 1)
+    Title.Font = Enum.Font.GothamBlack
+    Title.TextSize = 18
+    Title.BackgroundTransparency = 1
+
+    local Close = Instance.new("TextButton", MainFrame)
+    Close.Text = "X"
+    Close.Size = UDim2.new(0, 35, 0, 35)
+    Close.Position = UDim2.new(1, -45, 0, 10)
+    Close.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+    Close.TextColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", Close).CornerRadius = UDim.new(1, 0)
+
+    local OpenBtn = Instance.new("TextButton", ScreenGui)
+    OpenBtn.Text = "AÇ"
+    OpenBtn.Size = UDim2.new(0, 60, 0, 60)
+    OpenBtn.Position = UDim2.new(0, 20, 0.5, -30)
+    OpenBtn.Visible = false
+    OpenBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+    OpenBtn.TextColor3 = Color3.new(1, 1, 1)
+    OpenBtn.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
+    makeDraggable(OpenBtn)
+
+    Close.MouseButton1Click:Connect(function() MainFrame.Visible = false; OpenBtn.Visible = true end)
+    OpenBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenBtn.Visible = false end)
+
+    local List = Instance.new("ScrollingFrame", MainFrame)
+    List.Size = UDim2.new(0.9, 0, 0.8, 0)
+    List.Position = UDim2.new(0.05, 0, 0.18, 0)
+    List.BackgroundTransparency = 1
+    List.ScrollBarThickness = 0
+    Instance.new("UIListLayout", List).Padding = UDim.new(0, 10)
+
+    local function addToggle(txt, callback)
+        local state = false
+        local b = Instance.new("TextButton", List)
+        b.Size = UDim2.new(1, 0, 0, 50)
+        b.Text = txt
+        b.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        b.TextColor3 = Color3.new(1, 1, 1)
+        b.Font = Enum.Font.GothamBold
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+
+        b.MouseButton1Click:Connect(function()
+            state = not state
+            b.BackgroundColor3 = state and Color3.fromRGB(50, 180, 50) or Color3.fromRGB(180, 50, 50)
+            callback(state)
+        end)
+    end
+
+    ----------------------------------------------------------------
+    -- AKTİF ÖZELLİKLER
+    ----------------------------------------------------------------
+    addToggle("SONSUZ ZIPLAMA", function(v) InfiniteJumpEnabled = v end)
+    
+    addToggle("LAZERLERİ SİL", function(v)
+        if v then
+            for _, o in ipairs(Workspace:GetDescendants()) do
+                if o.Name:lower():find("laser") then o:Destroy() end
+            end
+        end
     end)
-    RunService.Stepped:Connect(function()
-        if noclip and player.Character then
-            for _, v in pairs(player.Character:GetDescendants()) do
-                if v:IsA("BasePart") and v.CanCollide then
-                    v.CanCollide = false
+
+    addToggle("NPC'LERİ SİL", function(v)
+        if v then
+            for _, o in ipairs(Workspace:GetDescendants()) do
+                if o.Name:lower():find("npc") then o:Destroy() end
+            end
+        end
+    end)
+
+    addToggle("POLİS ESP", function(v)
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Team and p.Team.Name == "Police" and p.Character then
+                if v then
+                    local h = Instance.new("Highlight", p.Character)
+                    h.Name = "CYRUS_ESP"
+                else
+                    if p.Character:FindFirstChild("CYRUS_ESP") then
+                        p.Character.CYRUS_ESP:Destroy()
+                    end
                 end
             end
         end
     end)
 
-    -- Hız Mekanizması
-    local speedLabel = Instance.new("TextLabel", features)
-    speedLabel.Size = UDim2.new(1, 0, 0, 25)
-    speedLabel.Position = UDim2.new(0, 0, 0, 100)
-    speedLabel.Text = t.speed
-    speedLabel.TextColor3 = Color3.new(1, 1, 1)
-    speedLabel.Font = Enum.Font.SourceSansBold
-    speedLabel.TextSize = 18
-    speedLabel.BackgroundTransparency = 1
-
-    local speedBox = Instance.new("TextBox", features)
-    speedBox.Size = UDim2.new(1, 0, 0, 35)
-    speedBox.Position = UDim2.new(0, 0, 0, 130)
-    speedBox.PlaceholderText = "Örn: 100"
-    speedBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    speedBox.TextColor3 = Color3.new(1, 1, 1)
-    speedBox.Font = Enum.Font.SourceSans
-    speedBox.TextSize = 18
-
-    local speedBtn = createBtn(t.setSpeed, 180)
-    speedBtn.MouseButton1Click:Connect(function()
-        local speed = tonumber(speedBox.Text)
-        if speed and humanoid then
-            humanoid.WalkSpeed = speed
-        end
-    end)
-
-    -- Sihirli Elma (Işınlanma)
-    local toolName = "Sihirli Elma"
-    local function createApple()
-        if not player.Backpack:FindFirstChild(toolName) then
-            local apple = Instance.new("Tool")
-            apple.Name = toolName
-            local handle = Instance.new("Part")
-            handle.Name = "Handle"
-            handle.Size = Vector3.new(1,1,1)
-            handle.Color = Color3.fromRGB(255,0,0)
-            handle.Parent = apple
-            apple.RequiresHandle = true
-            apple.Parent = player.Backpack
-
-            local mouse = player:GetMouse()
-            apple.Activated:Connect(function()
-                local targetPos = mouse.Hit.p + Vector3.new(0, 5, 0)
-                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos)
-                end
-            end)
-        end
-    end
-    player.CharacterAdded:Connect(function()
-        char = player.Character
-        humanoid = char:WaitForChild("Humanoid")
-        createApple()
-    end)
-    local appleBtn = createBtn("🍎 " .. t.teleport, 230)
-    appleBtn.MouseButton1Click:Connect(function()
-        createApple()
-    end)
-
-    -- Menü gizleme/gösterme butonu
-    hideBtn.MouseButton1Click:Connect(function()
-        frame.Visible = false
-        showMenuBtn.Visible = true
-    end)
-    showMenuBtn.MouseButton1Click:Connect(function()
-        frame.Visible = true
-        showMenuBtn.Visible = false
-    end)
-
-    -- Menü tamamen kapatma butonu
-    closeBtn.MouseButton1Click:Connect(function()
-        frame.Visible = false
-        showMenuBtn.Visible = false
-    end)
-
-    -- F4 ile menüyü tekrar açma
-    UIS.InputBegan:Connect(function(input, gp)
-        if not gp and input.KeyCode == Enum.KeyCode.F4 then
-            frame.Visible = not frame.Visible
-        end
-    end)
-
-    -- Kod doğrulama
-    approve.MouseButton1Click:Connect(function()
-        if box.Text:lower() == t.code then
-            features.Visible = true
-            approve.Text = t.approved
-            approve.BackgroundColor3 = Color3.fromRGB(34, 139, 34)
-        else
-            features.Visible = false
-            approve.Text = t.approve
-            approve.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
-        end
-    end)
-
-    -- Kodu Al (Link güncel)
-    copy.MouseButton1Click:Connect(function()
-        pcall(function()
-            setclipboard("https://discord.gg/at5WcSTc")
-            copy.Text = t.codeCopied
-            task.wait(2)
-            copy.Text = t.codeText
-        end)
+    addToggle("FPS BOOSTER (LAG FIX)", function(v)
+        if v then settings().Rendering.QualityLevel = 1 end
     end)
 end
-]])()
+
+-- BAŞLAT
+playIntro(createMain)
